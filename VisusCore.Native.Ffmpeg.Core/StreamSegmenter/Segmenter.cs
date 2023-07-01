@@ -115,6 +115,10 @@ public class Segmenter : IDisposable
     private TaskCompletionSource _startCompletionSource;
     private TaskCompletionSource _stopCompletionSource;
     private TaskCompletionSource<Segment> _segmentCompletionSource;
+    // We need this to keep the delegate alive.
+#pragma warning disable S1450 // Private fields only used as local variables in methods should become local variables
+    private avio_alloc_context_write_packet _writePacketCallback;
+#pragma warning restore S1450 // Private fields only used as local variables in methods should become local variables
 
     public Segmenter(IStreamSource streamSource, bool allowAudio = true, uint outputBufferSize = 4096)
     {
@@ -286,6 +290,23 @@ public class Segmenter : IDisposable
         _stopCompletionSource.TrySetResult();
     }
 
+    private unsafe AVIOContextRef CreateOutputIOContext(WorkerContext workerContext)
+    {
+        _writePacketCallback = CreateOutputIOWritePacket(workerContext);
+
+        return AVException.ThrowIfNull(
+            new AVIOContextRef(
+                ffmpeg.avio_alloc_context(
+                    workerContext.OutputBuffer,
+                    Convert.ToInt32(workerContext.OutputBufferSize),
+                    1,
+                    opaque: null,
+                    read_packet: null,
+                    write_packet: _writePacketCallback,
+                    seek: null)),
+            "Error allocating output IO context.");
+    }
+
     private static unsafe IDictionary<int, StreamInfo> SetupStreams(
         AVFormatContextRef inputFormatContext,
         AVFormatContextRef outputFormatContext,
@@ -336,19 +357,6 @@ public class Segmenter : IDisposable
             AVMediaType.AVMEDIA_TYPE_VIDEO => true,
             _ => false,
         };
-
-    private static unsafe AVIOContextRef CreateOutputIOContext(WorkerContext workerContext) =>
-        AVException.ThrowIfNull(
-            new AVIOContextRef(
-                ffmpeg.avio_alloc_context(
-                    workerContext.OutputBuffer,
-                    Convert.ToInt32(workerContext.OutputBufferSize),
-                    1,
-                    opaque: null,
-                    read_packet: null,
-                    write_packet: CreateOutputIOWritePacket(workerContext),
-                    seek: null)),
-            "Error allocating output IO context.");
 
     private static unsafe avio_alloc_context_write_packet CreateOutputIOWritePacket(WorkerContext workerContext) =>
         (_, buffer, bufferSize) =>
