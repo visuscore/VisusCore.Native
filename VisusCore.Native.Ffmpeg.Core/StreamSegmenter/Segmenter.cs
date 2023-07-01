@@ -29,8 +29,8 @@ internal class StreamInfo
     public long? LastDts { get; set; }
     public long? SegmentFirstFrameTimestampUtc { get; set; }
     public long? SegmentLastFrameTimeStampUtc { get; set; }
-    public long? SegmentFirstFrameWallclock { get; set; }
-    public long? SegmentLastFrameWallclock { get; set; }
+    public long? SegmentFirstFrameTimestampProvided { get; set; }
+    public long? SegmentLastFrameTimestampProvided { get; set; }
     public long? SegmentFrameCount { get; set; }
 
     public void ResetCounters()
@@ -39,8 +39,8 @@ internal class StreamInfo
         LastDts = null;
         SegmentFirstFrameTimestampUtc = null;
         SegmentLastFrameTimeStampUtc = null;
-        SegmentFirstFrameWallclock = null;
-        SegmentLastFrameWallclock = null;
+        SegmentFirstFrameTimestampProvided = null;
+        SegmentLastFrameTimestampProvided = null;
         SegmentFrameCount = null;
     }
 }
@@ -261,10 +261,10 @@ public class Segmenter : IDisposable
                 avPacket.AdjustDts(streamInfo.MediaType, streamInfo.LastDts);
                 streamInfo.LastDts = avPacket.dts;
                 streamInfo.LastPts = avPacket.pts;
-                streamInfo.SegmentFirstFrameTimestampUtc ??= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                streamInfo.SegmentLastFrameTimeStampUtc = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                streamInfo.SegmentFirstFrameWallclock ??= avPacket.GetProducerReferenceTimeMs();
-                streamInfo.SegmentLastFrameWallclock = avPacket.GetProducerReferenceTimeMs();
+                streamInfo.SegmentFirstFrameTimestampUtc ??= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000;
+                streamInfo.SegmentLastFrameTimeStampUtc = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000;
+                streamInfo.SegmentFirstFrameTimestampProvided ??= avPacket.GetProducerReferenceTime();
+                streamInfo.SegmentLastFrameTimestampProvided = avPacket.GetProducerReferenceTime();
                 if (streamInfo.MediaType == AVMediaType.AVMEDIA_TYPE_VIDEO)
                 {
                     streamInfo.SegmentFrameCount = (streamInfo.SegmentFrameCount ?? 0) + 1;
@@ -462,7 +462,7 @@ public class Segmenter : IDisposable
                         Init = initBuffer,
                         Duration = videoStreamInfo?.SegmentLastFrameTimeStampUtc - videoStreamInfo?.SegmentFirstFrameTimestampUtc,
                         TimestampUtc = videoStreamInfo?.SegmentFirstFrameTimestampUtc,
-                        TimestampWallclock = videoStreamInfo?.SegmentFirstFrameWallclock,
+                        TimestampProvided = videoStreamInfo?.SegmentFirstFrameTimestampProvided,
                         FrameCount = videoStreamInfo?.SegmentFrameCount,
                     });
 

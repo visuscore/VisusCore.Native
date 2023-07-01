@@ -38,10 +38,14 @@ return await Parser.Default.ParseArguments<SegmenterOptions>(args)
             do
             {
                 segment = await segmenter.GetNextSegmentAsync(stoppingToken.Token);
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Timestamp: {segment.TimestampUtc}"));
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Wallclock: {segment.TimestampWallclock}"));
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Frames received: {segment.FrameCount}"));
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Segment duration: {segment.Duration}"));
+                Console.WriteLine(
+                    string.Create(CultureInfo.InvariantCulture, $"Timestamp: {segment.TimestampUtc}"));
+                Console.WriteLine(
+                    string.Create(CultureInfo.InvariantCulture, $"Provided timestamp: {segment.TimestampProvided}"));
+                Console.WriteLine(
+                    string.Create(CultureInfo.InvariantCulture, $"Frames received: {segment.FrameCount}"));
+                Console.WriteLine(
+                    string.Create(CultureInfo.InvariantCulture, $"Segment duration: {segment.Duration}"));
                 Console.WriteLine($"Init size: {segment.Init.Length}");
                 Console.WriteLine($"Data size: {segment.Data.Length}");
             }
