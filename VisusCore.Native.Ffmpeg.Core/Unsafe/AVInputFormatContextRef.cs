@@ -19,8 +19,7 @@ public unsafe class AVInputFormatContextRef : AVFormatContextRef
     {
         if (_nativePointer != null)
         {
-            InvokeOnInstancePointer(context =>
-                ffmpeg.avformat_close_input(context));
+            InvokeOnInstancePointer(ffmpeg.avformat_close_input);
         }
     }
 }

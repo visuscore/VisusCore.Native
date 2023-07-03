@@ -35,8 +35,7 @@ public unsafe class AVIOContextRef : AVInstanceRef<AVIOContext, AVIOContextInsta
     {
         if (_nativePointer != null)
         {
-            InvokeOnInstancePointer(context =>
-                ffmpeg.avio_context_free(context));
+            InvokeOnInstancePointer(ffmpeg.avio_context_free);
         }
     }
 }

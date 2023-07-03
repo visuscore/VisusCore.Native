@@ -21,7 +21,7 @@ internal enum ESegmenterState
 
 internal delegate int BufferAppenderDelegate(WorkerContext context, ReadOnlySpan<byte> buffer);
 
-internal class StreamInfo
+internal sealed class StreamInfo
 {
     public int TargetStreamIndex { get; set; }
     public AVMediaType MediaType { get; set; }
