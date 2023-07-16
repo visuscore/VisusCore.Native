@@ -9,8 +9,8 @@ public class Segment
 
     public ReadOnlySpan<byte> Init { get => _init; init => _init = value.ToArray(); }
     public ReadOnlySpan<byte> Data { get => _data; init => _data = value.ToArray(); }
-    public long? Duration { get; init; }
-    public long? TimestampUtc { get; init; }
+    public long Duration { get; init; }
+    public long TimestampUtc { get; init; }
     public long? TimestampProvided { get; init; }
     public long? FrameCount { get; init; }
 }

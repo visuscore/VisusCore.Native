@@ -11,98 +11,6 @@ using VisusCore.Native.Ffmpeg.Core.Unsafe;
 
 namespace VisusCore.Native.Ffmpeg.Core.StreamSegmenter;
 
-internal enum ESegmenterState
-{
-    Unknown,
-    WaitingForFtyp,
-    WaitingForMoov,
-    WaitingForMoof,
-}
-
-internal delegate int BufferAppenderDelegate(WorkerContext context, ReadOnlySpan<byte> buffer);
-
-internal sealed class StreamInfo
-{
-    public int TargetStreamIndex { get; set; }
-    public AVMediaType MediaType { get; set; }
-    public long? LastPts { get; set; }
-    public long? LastDts { get; set; }
-    public long? SegmentFirstFrameTimestampUtc { get; set; }
-    public long? SegmentLastFrameTimeStampUtc { get; set; }
-    public long? SegmentFirstFrameTimestampProvided { get; set; }
-    public long? SegmentLastFrameTimestampProvided { get; set; }
-    public long? SegmentFrameCount { get; set; }
-
-    public void ResetCounters()
-    {
-        LastPts = null;
-        LastDts = null;
-        SegmentFirstFrameTimestampUtc = null;
-        SegmentLastFrameTimeStampUtc = null;
-        SegmentFirstFrameTimestampProvided = null;
-        SegmentLastFrameTimestampProvided = null;
-        SegmentFrameCount = null;
-    }
-}
-
-internal class WorkerContext : IDisposable
-{
-    private readonly Segmenter _segmenter;
-    private bool _disposed;
-
-    public WorkerContext(Segmenter segmenter) =>
-        _segmenter = segmenter;
-
-    public ESegmenterState State { get; set; }
-    public AVFormatContextRef InputFormatContext { get; set; }
-    public AVFormatContextRef OutputFormatContext { get; set; }
-    public IDictionary<int, StreamInfo> StreamMap { get; set; }
-    public uint OutputBufferSize { get; set; }
-    public AVMemoryRef<byte> OutputBuffer { get; set; }
-    public AVIOContextRef OutputIOContext { get; set; }
-    public NativeRef<byte> FtypBuffer { get; set; }
-    public uint FtypBufferSize { get; set; }
-    public uint ExpectingFtypSize { get; set; }
-    public NativeRef<byte> MoovBuffer { get; set; }
-    public uint MoovBufferSize { get; set; }
-    public uint ExpectingMoovSize { get; set; }
-    public NativeRef<byte> SegmentBuffer { get; set; }
-    public uint SegmentBufferSize { get; set; }
-    public uint ExpectingSegmentSize { get; set; }
-
-    internal void SetSegmentResult(Segment segment) =>
-        _segmenter.SetSegmentResult(segment);
-
-    internal void SetSegmentError(Exception exception) =>
-        _segmenter.SetSegmentError(exception);
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                InputFormatContext?.Dispose();
-                OutputFormatContext?.Dispose();
-                OutputIOContext?.Dispose();
-                OutputBuffer?.Dispose();
-                FtypBuffer?.Dispose();
-                MoovBuffer?.Dispose();
-                SegmentBuffer?.Dispose();
-            }
-
-            _disposed = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-}
-
 public class Segmenter : IDisposable
 {
     public const uint MinOutputBufferSize = 8;
@@ -460,8 +368,8 @@ public class Segmenter : IDisposable
                     {
                         Data = workerContext.SegmentBuffer.ToArray(Convert.ToInt32(workerContext.SegmentBufferSize)),
                         Init = initBuffer,
-                        Duration = videoStreamInfo?.SegmentLastFrameTimeStampUtc - videoStreamInfo?.SegmentFirstFrameTimestampUtc,
-                        TimestampUtc = videoStreamInfo?.SegmentFirstFrameTimestampUtc,
+                        Duration = (videoStreamInfo?.SegmentLastFrameTimeStampUtc - videoStreamInfo?.SegmentFirstFrameTimestampUtc) ?? 0,
+                        TimestampUtc = videoStreamInfo?.SegmentFirstFrameTimestampUtc ?? 0,
                         TimestampProvided = videoStreamInfo?.SegmentFirstFrameTimestampProvided,
                         FrameCount = videoStreamInfo?.SegmentFrameCount,
                     });
@@ -543,4 +451,93 @@ public class Segmenter : IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+}
+
+internal enum ESegmenterState
+{
+    Unknown,
+    WaitingForFtyp,
+    WaitingForMoov,
+    WaitingForMoof,
+}
+
+internal delegate int BufferAppenderDelegate(WorkerContext context, ReadOnlySpan<byte> buffer);
+
+internal sealed class StreamInfo
+{
+    public int TargetStreamIndex { get; set; }
+    public AVMediaType MediaType { get; set; }
+    public long? LastPts { get; set; }
+    public long? LastDts { get; set; }
+    public long? SegmentFirstFrameTimestampUtc { get; set; }
+    public long? SegmentLastFrameTimeStampUtc { get; set; }
+    public long? SegmentFirstFrameTimestampProvided { get; set; }
+    public long? SegmentLastFrameTimestampProvided { get; set; }
+    public long? SegmentFrameCount { get; set; }
+
+    public void ResetCounters()
+    {
+        LastPts = null;
+        LastDts = null;
+        SegmentFirstFrameTimestampUtc = null;
+        SegmentLastFrameTimeStampUtc = null;
+        SegmentFirstFrameTimestampProvided = null;
+        SegmentLastFrameTimestampProvided = null;
+        SegmentFrameCount = null;
+    }
+}
+
+internal sealed class WorkerContext : IDisposable
+{
+    private readonly Segmenter _segmenter;
+    private bool _disposed;
+
+    public WorkerContext(Segmenter segmenter) =>
+        _segmenter = segmenter;
+
+    public ESegmenterState State { get; set; }
+    public AVFormatContextRef InputFormatContext { get; set; }
+    public AVFormatContextRef OutputFormatContext { get; set; }
+    public IDictionary<int, StreamInfo> StreamMap { get; set; }
+    public uint OutputBufferSize { get; set; }
+    public AVMemoryRef<byte> OutputBuffer { get; set; }
+    public AVIOContextRef OutputIOContext { get; set; }
+    public NativeRef<byte> FtypBuffer { get; set; }
+    public uint FtypBufferSize { get; set; }
+    public uint ExpectingFtypSize { get; set; }
+    public NativeRef<byte> MoovBuffer { get; set; }
+    public uint MoovBufferSize { get; set; }
+    public uint ExpectingMoovSize { get; set; }
+    public NativeRef<byte> SegmentBuffer { get; set; }
+    public uint SegmentBufferSize { get; set; }
+    public uint ExpectingSegmentSize { get; set; }
+
+    internal void SetSegmentResult(Segment segment) =>
+        _segmenter.SetSegmentResult(segment);
+
+    internal void SetSegmentError(Exception exception) =>
+        _segmenter.SetSegmentError(exception);
+
+    private void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                InputFormatContext?.Dispose();
+                OutputFormatContext?.Dispose();
+                OutputIOContext?.Dispose();
+                OutputBuffer?.Dispose();
+                FtypBuffer?.Dispose();
+                MoovBuffer?.Dispose();
+                SegmentBuffer?.Dispose();
+            }
+
+            _disposed = true;
+        }
+    }
+
+    public void Dispose() =>
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
 }
