@@ -363,7 +363,11 @@ public class Segmenter : IDisposable
                         && streamInfo.SegmentLastFrameTimeStampUtc is not null);
                     var initBuffer = new byte[workerContext.FtypBufferSize + workerContext.MoovBufferSize];
                     workerContext.FtypBuffer.CopyTo(Convert.ToInt32(workerContext.FtypBufferSize), initBuffer);
-                    workerContext.MoovBuffer.CopyTo(Convert.ToInt32(workerContext.MoovBufferSize), initBuffer);
+                    var moovBuffer = new Span<byte>(
+                        initBuffer,
+                        Convert.ToInt32(workerContext.FtypBufferSize),
+                        Convert.ToInt32(initBuffer.Length - workerContext.FtypBufferSize));
+                    workerContext.MoovBuffer.CopyTo(Convert.ToInt32(workerContext.MoovBufferSize), moovBuffer);
                     workerContext.SetSegmentResult(new Segment
                     {
                         Data = workerContext.SegmentBuffer.ToArray(Convert.ToInt32(workerContext.SegmentBufferSize)),
