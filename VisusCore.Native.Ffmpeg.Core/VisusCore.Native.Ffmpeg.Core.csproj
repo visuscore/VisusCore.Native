@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="FFmpeg.AutoGen" Version="6.0.0.2" />
+    <PackageReference Include="FFmpeg.AutoGen.Abstractions" Version="6.0.0.2" />
   </ItemGroup>
 
   <ItemGroup>

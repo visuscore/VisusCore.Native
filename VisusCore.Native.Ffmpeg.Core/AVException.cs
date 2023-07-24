@@ -29,27 +29,36 @@ public class AVException : Exception
     {
     }
 
-    public static void ThrowIfError(int errorCode, string message)
+    public static int ThrowIfError(int errorCode, string message, Action cleanup = null, Func<int, bool> except = null)
     {
-        if (errorCode < 0)
+        if (errorCode < 0 && except?.Invoke(errorCode) is not true)
         {
+            cleanup?.Invoke();
             throw new AVException(
                 string.Join(Environment.NewLine, message, GetErrorMessage(errorCode)));
         }
+
+        return errorCode;
     }
 
-    public static void ThrowIfNull(IntPtr nativePointer, string message)
+    public static IntPtr ThrowIfNull(IntPtr nativePointer, string message, Action cleanup = null)
     {
         if (nativePointer == IntPtr.Zero)
         {
+            cleanup?.Invoke();
             throw new AVException(message);
         }
+
+        return nativePointer;
     }
 
-    public static TInstanceRef ThrowIfNull<TInstanceRef>(TInstanceRef instanceReference, string message)
+    public static TInstanceRef ThrowIfNull<TInstanceRef>(
+        TInstanceRef instanceReference,
+        string message,
+        Action cleanup = null)
         where TInstanceRef : IAVInstanceRef
     {
-        ThrowIfNull(instanceReference.NativePointer, message);
+        ThrowIfNull(instanceReference.NativePointer, message, cleanup);
 
         return instanceReference;
     }

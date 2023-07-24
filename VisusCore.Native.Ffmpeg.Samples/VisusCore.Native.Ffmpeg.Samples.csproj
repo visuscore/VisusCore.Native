@@ -8,10 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\VisusCore.Native.Ffmpeg.Core\VisusCore.Native.Ffmpeg.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="sample_hevc.mp4">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
