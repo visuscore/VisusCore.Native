@@ -2,7 +2,9 @@ using FFmpeg.AutoGen;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using VisusCore.Native.Ffmpeg.Core.Models;
 using VisusCore.Native.Ffmpeg.Core.Unsafe;
 using AbstractFfmpeg = FFmpeg.AutoGen.Abstractions;
 
@@ -82,6 +84,71 @@ public class Extractor : IDisposable
 
         return true;
     }
+
+    public unsafe IEnumerable<StreamDetails> GetStreams() =>
+        _streamToContext
+            .Select(entry =>
+            {
+                var details = new StreamDetails
+                {
+                    Index = entry.Key,
+                };
+
+                var codecDescriptor = ffmpeg.avcodec_descriptor_get(entry.Value.CodecContext.NativePointer->codec_id);
+                if (codecDescriptor is not null)
+                {
+                    if (codecDescriptor->name is not null)
+                    {
+                        details.CodecName = Marshal.PtrToStringAnsi((IntPtr)codecDescriptor->name);
+                    }
+
+                    if (codecDescriptor->long_name is not null)
+                    {
+                        details.CodecLongName = Marshal.PtrToStringAnsi((IntPtr)codecDescriptor->long_name);
+                    }
+                }
+
+                details.Profile = ffmpeg.avcodec_profile_name(
+                    entry.Value.CodecContext.NativePointer->codec_id,
+                    entry.Value.CodecContext.NativePointer->profile);
+
+                details.MediaTypeName = ffmpeg.av_get_media_type_string(entry.Value.CodecContext.NativePointer->codec_type);
+
+                switch (entry.Value.CodecContext.NativePointer->codec_type)
+                {
+                    case AVMediaType.AVMEDIA_TYPE_VIDEO:
+                        details.MediaType = EMediaType.Video;
+                        details.Width = entry.Value.CodecContext.NativePointer->width;
+                        details.Height = entry.Value.CodecContext.NativePointer->height;
+                        details.PixelFormatName = ffmpeg.av_get_pix_fmt_name(entry.Value.CodecContext.NativePointer->pix_fmt);
+                        details.FrameRate = entry.Value.CodecContext.NativePointer->framerate;
+                        details.AvgFrameRate = entry.Value.CodecContext.NativePointer->framerate;
+                        details.TimeBase = entry.Value.CodecContext.NativePointer->time_base;
+                        break;
+                    case AVMediaType.AVMEDIA_TYPE_AUDIO:
+                        details.MediaType = EMediaType.Audio;
+                        details.Channels = entry.Value.CodecContext.NativePointer->ch_layout.nb_channels;
+                        details.SampleRate = entry.Value.CodecContext.NativePointer->sample_rate;
+                        details.SampleFormatName = ffmpeg.av_get_sample_fmt_name(
+                            entry.Value.CodecContext.NativePointer->sample_fmt);
+                        break;
+                    case AVMediaType.AVMEDIA_TYPE_DATA:
+                        details.MediaType = EMediaType.Data;
+                        break;
+                    case AVMediaType.AVMEDIA_TYPE_SUBTITLE:
+                        details.MediaType = EMediaType.Subtitle;
+                        break;
+                    case AVMediaType.AVMEDIA_TYPE_NB:
+                    case AVMediaType.AVMEDIA_TYPE_ATTACHMENT:
+                    case AVMediaType.AVMEDIA_TYPE_UNKNOWN:
+                    default:
+                        details.MediaType = EMediaType.Unknown;
+                        break;
+                }
+
+                return details;
+            })
+            .ToArray();
 
     private unsafe Frame DecodePacket(ExtractorStreamContext context, AVPacketRef packet)
     {
