@@ -25,8 +25,15 @@ public unsafe class AVCodecContextRef : AVInstanceRef<AVCodecContext, AVCodecCon
         }
     }
 
-    public static implicit operator AVCodecContext*(AVCodecContextRef context) =>
-        context._nativePointer;
+    public static implicit operator AVCodecContext*(AVCodecContextRef context)
+    {
+        if (context is null)
+        {
+            return null;
+        }
+
+        return context._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

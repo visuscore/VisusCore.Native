@@ -25,8 +25,15 @@ public unsafe class AVFrameRef : AVInstanceRef<AVFrame, AVFrameInstancePointerAc
         }
     }
 
-    public static implicit operator AVFrame*(AVFrameRef packet) =>
-        packet._nativePointer;
+    public static implicit operator AVFrame*(AVFrameRef packet)
+    {
+        if (packet is null)
+        {
+            return null;
+        }
+
+        return packet._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

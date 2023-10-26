@@ -25,8 +25,15 @@ public unsafe class AVFormatContextRef : AVInstanceRef<AVFormatContext, AVFormat
         }
     }
 
-    public static implicit operator AVFormatContext*(AVFormatContextRef context) =>
-        context._nativePointer;
+    public static implicit operator AVFormatContext*(AVFormatContextRef context)
+    {
+        if (context is null)
+        {
+            return null;
+        }
+
+        return context._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

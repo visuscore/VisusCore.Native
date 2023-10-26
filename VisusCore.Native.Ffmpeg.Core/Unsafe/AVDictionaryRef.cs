@@ -33,8 +33,15 @@ public unsafe class AVDictionaryRef : AVInstanceRef<AVDictionary, AVDictionaryIn
         }
     }
 
-    public static implicit operator AVDictionary*(AVDictionaryRef context) =>
-        context._nativePointer;
+    public static implicit operator AVDictionary*(AVDictionaryRef context)
+    {
+        if (context is null)
+        {
+            return null;
+        }
+
+        return context._nativePointer;
+    }
 
     public static implicit operator AVDictionaryRef(AVDictionary* context) =>
         new(context);

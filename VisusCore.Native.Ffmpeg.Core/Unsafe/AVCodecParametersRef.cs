@@ -25,8 +25,15 @@ public unsafe class AVCodecParametersRef : AVInstanceRef<AVCodecParameters, AVCo
         }
     }
 
-    public static implicit operator AVCodecParameters*(AVCodecParametersRef parameters) =>
-        parameters._nativePointer;
+    public static implicit operator AVCodecParameters*(AVCodecParametersRef parameters)
+    {
+        if (parameters is null)
+        {
+            return null;
+        }
+
+        return parameters._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

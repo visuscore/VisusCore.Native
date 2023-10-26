@@ -28,8 +28,15 @@ public unsafe class AVIOContextRef : AVInstanceRef<AVIOContext, AVIOContextInsta
         }
     }
 
-    public static implicit operator AVIOContext*(AVIOContextRef context) =>
-        context._nativePointer;
+    public static implicit operator AVIOContext*(AVIOContextRef context)
+    {
+        if (context is null)
+        {
+            return null;
+        }
+
+        return context._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

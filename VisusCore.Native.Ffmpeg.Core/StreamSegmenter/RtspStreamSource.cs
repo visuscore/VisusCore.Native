@@ -44,9 +44,9 @@ public class RtspStreamSource : IStreamSource
             options.Set("rtsp_flags", "prefer_tcp", 1);
         }
 
-        if (_timeout is not null && _timeout?.TotalMilliseconds > 0)
+        if (_timeout is not null && _timeout.Value.TotalMilliseconds > 0)
         {
-            options.Set("timeout", (_timeout?.TotalMilliseconds * 1000)?.ToString(CultureInfo.InvariantCulture));
+            options.Set("timeout", (_timeout.Value.TotalMilliseconds * 1000).ToString(CultureInfo.InvariantCulture));
         }
 
         var context = new AVInputFormatContextRef();
@@ -65,7 +65,7 @@ public class RtspStreamSource : IStreamSource
         }
         catch
         {
-            context?.Dispose();
+            context.Dispose();
 
             throw;
         }

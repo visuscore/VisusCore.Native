@@ -27,8 +27,15 @@ public unsafe class AVMemoryRef<TInstance> : AVInstanceRef<TInstance, AVMemoryIn
         }
     }
 
-    public static implicit operator TInstance*(AVMemoryRef<TInstance> memory) =>
-        memory._nativePointer;
+    public static implicit operator TInstance*(AVMemoryRef<TInstance> memory)
+    {
+        if (memory is null)
+        {
+            return default;
+        }
+
+        return memory._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

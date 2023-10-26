@@ -25,8 +25,15 @@ public unsafe class SwsContextRef : AVInstanceRef<SwsContext, SwsContextInstance
         }
     }
 
-    public static implicit operator SwsContext*(SwsContextRef context) =>
-        context._nativePointer;
+    public static implicit operator SwsContext*(SwsContextRef context)
+    {
+        if (context is null)
+        {
+            return null;
+        }
+
+        return context._nativePointer;
+    }
 
     protected override void ReleaseInstance()
     {

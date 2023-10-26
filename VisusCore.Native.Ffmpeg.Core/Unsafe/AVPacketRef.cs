@@ -25,11 +25,25 @@ public unsafe class AVPacketRef : AVInstanceRef<AVPacket, AVPacketInstancePointe
         }
     }
 
-    public static implicit operator AVPacket*(AVPacketRef packet) =>
-        packet._nativePointer;
+    public static implicit operator AVPacket*(AVPacketRef packet)
+    {
+        if (packet is null)
+        {
+            return null;
+        }
 
-    public static implicit operator ReadOnlySpan<byte>(AVPacketRef packet) =>
-        new(packet._nativePointer->buf->data, Convert.ToInt32(packet._nativePointer->buf->size));
+        return packet._nativePointer;
+    }
+
+    public static implicit operator ReadOnlySpan<byte>(AVPacketRef packet)
+    {
+        if (packet is null)
+        {
+            return ReadOnlySpan<byte>.Empty;
+        }
+
+        return new(packet._nativePointer->buf->data, Convert.ToInt32(packet._nativePointer->buf->size));
+    }
 
     protected override void ReleaseInstance()
     {

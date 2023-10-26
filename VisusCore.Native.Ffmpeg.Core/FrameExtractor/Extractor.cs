@@ -279,7 +279,7 @@ public class Extractor : IDisposable
             "Error scaling frame.",
             destination.Dispose);
 
-        source?.Dispose();
+        source.Dispose();
 
         return destination;
     }
